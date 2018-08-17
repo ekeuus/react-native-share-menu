@@ -12,6 +12,9 @@ import com.meedan.ShareMenuPackage;
 import java.util.Map;
 import java.util.ArrayList;
 
+import android.content.Context;
+import android.database.Cursor;
+import android.provider.MediaStore;
 import android.widget.Toast;
 import android.app.Activity;
 import android.content.Intent;
@@ -24,6 +27,23 @@ public class ShareMenuModule extends ReactContextBaseJavaModule {
   public ShareMenuModule(ReactApplicationContext reactContext) {
     super(reactContext);
     mReactContext = reactContext;
+  }
+
+  private String getRealPathFromURI(Context context, Uri contentUri) {
+    Cursor cursor = null;
+    try {
+      String[] proj = { MediaStore.Images.Media.DATA };
+      cursor = context.getContentResolver().query(contentUri,  proj, null, null, null);
+      int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+      cursor.moveToFirst();
+      return cursor.getString(column_index);
+    } catch (Exception e) {
+      return "";
+    } finally {
+      if (cursor != null) {
+        cursor.close();
+      }
+    }
   }
 
   @Override
@@ -53,10 +73,15 @@ public class ShareMenuModule extends ReactContextBaseJavaModule {
       if ("text/plain".equals(type)) {
         String input = intent.getStringExtra(Intent.EXTRA_TEXT);
         successCallback.invoke(input);
-      } else if (type.startsWith("image/") || type.startsWith("video/")) {
+      } else if (type.startsWith("image/") || type.startsWith("video/") || type.endsWith("pdf") || type.endsWith("pptp")) {
         Uri imageUri = (Uri) intent.getParcelableExtra(Intent.EXTRA_STREAM);
         if (imageUri != null) {
-          successCallback.invoke(imageUri.toString());
+          if (type.endsWith("pdf") || type.endsWith("pptp")) { // get pdf path
+            String res = FileUtils.getPath(mReactContext, imageUri);
+            successCallback.invoke(res);
+          } else {
+            successCallback.invoke(imageUri.toString());
+          }
         }
       } else {
         Toast.makeText(mReactContext, "Type is not support", Toast.LENGTH_SHORT).show();
