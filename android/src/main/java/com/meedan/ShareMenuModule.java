@@ -73,7 +73,7 @@ public class ShareMenuModule extends ReactContextBaseJavaModule {
       if ("text/plain".equals(type)) {
         String input = intent.getStringExtra(Intent.EXTRA_TEXT);
         successCallback.invoke(input);
-      } else if (type.startsWith("image/") || type.startsWith("video/") || type.endsWith("pdf") || type.endsWith("pptp")) {
+      } else if (type.startsWith("image/") || type.startsWith("video/") || type.endsWith("pdf") || type.endsWith("ppt") || type.endsWith("pptx")) {
         Uri imageUri = (Uri) intent.getParcelableExtra(Intent.EXTRA_STREAM);
         if (imageUri != null) {
           if (type.endsWith("pdf") || type.endsWith("pptp")) { // get pdf path
