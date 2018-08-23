@@ -59,6 +59,35 @@ public class ShareMenuModule extends ReactContextBaseJavaModule {
     mActivity.setIntent(intent);
   }  
 
+ private static void writeBytesToFileClassic(byte[] bFile, String fileDest) {
+    FileOutputStream fileOuputStream = null;
+
+    try {
+      fileOuputStream = new FileOutputStream(fileDest);
+      fileOuputStream.write(bFile);
+
+    } catch (IOException e) {
+      e.printStackTrace();
+    } finally {
+      if (fileOuputStream != null) {
+        try {
+          fileOuputStream.close();
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
+      }
+    }
+  }
+
+    public static byte[] getBytesFromInputStream(InputStream is) throws IOException {
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        byte[] buffer = new byte[0xFFFF];
+        for (int len = is.read(buffer); len != -1; len = is.read(buffer)) {
+            os.write(buffer, 0, len);
+        }
+        return os.toByteArray();
+    }
+
   @ReactMethod
   public void getSharedText(Callback successCallback) {
     Activity mActivity = getCurrentActivity();
@@ -73,12 +102,25 @@ public class ShareMenuModule extends ReactContextBaseJavaModule {
       if ("text/plain".equals(type)) {
         String input = intent.getStringExtra(Intent.EXTRA_TEXT);
         successCallback.invoke(input);
-      } else if (type.startsWith("image/") || type.startsWith("video/") || type.endsWith("pdf") || type.endsWith("ppt") || type.endsWith("pptx")) {
+      } else if (type.startsWith("image/") || type.startsWith("video/") || type.endsWith("pdf") || type.endsWith("ms-powerpoint") || type.endsWith("openxmlformats-officedocument.presentationml.presentation")) {
         Uri imageUri = (Uri) intent.getParcelableExtra(Intent.EXTRA_STREAM);
         if (imageUri != null) {
-          if (type.endsWith("pdf") || type.endsWith("ppt") || type.endsWith("pptx")) { // get pdf path
+          if (type.endsWith("pdf")) { // get pdf path
             String res = FileUtils.getPath(mReactContext, imageUri);
             successCallback.invoke(res);
+          } else if (type.endsWith("ms-powerpoint") || type.endsWith("openxmlformats-officedocument.presentationml.presentation")) {
+            InputStream iStream;
+            try {
+              iStream = mReactContext.getContentResolver().openInputStream(imageUri);
+              File file = new File(mReactContext.getCacheDir(), imageUri.getLastPathSegment());
+              byte[] info = getBytesFromInputStream(iStream);
+              writeBytesToFileClassic(info, file.getCanonicalPath());
+              successCallback.invoke(file.getAbsolutePath());
+            } catch (FileNotFoundException e) {
+              e.printStackTrace();
+            } catch (IOException e) {
+              e.printStackTrace();
+            }
           } else {
             successCallback.invoke(imageUri.toString());
           }
