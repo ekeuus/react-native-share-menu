@@ -9,6 +9,12 @@ import com.facebook.react.bridge.Callback;
 
 import com.meedan.ShareMenuPackage;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Map;
 import java.util.ArrayList;
 
@@ -118,15 +124,20 @@ public class ShareMenuModule extends ReactContextBaseJavaModule {
               successCallback.invoke(file.getAbsolutePath());
             } catch (FileNotFoundException e) {
               e.printStackTrace();
+              successCallback.invoke("");
             } catch (IOException e) {
               e.printStackTrace();
+              successCallback.invoke("");
             }
           } else {
             successCallback.invoke(imageUri.toString());
           }
+        } else {
+          successCallback.invoke("");
         }
       } else {
         Toast.makeText(mReactContext, "Type is not support", Toast.LENGTH_SHORT).show();
+        successCallback.invoke(null);
       }
     } else if (Intent.ACTION_SEND_MULTIPLE.equals(action) && type != null) {
         if (type.startsWith("image/") || type.startsWith("video/")) {
@@ -140,7 +151,10 @@ public class ShareMenuModule extends ReactContextBaseJavaModule {
           }
         } else {
           Toast.makeText(mReactContext, "Type is not support", Toast.LENGTH_SHORT).show();
+          successCallback.invoke("");
         }
+    } else {
+      successCallback.invoke("");
     }
   }
 
